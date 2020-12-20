@@ -1,33 +1,42 @@
-version: 2.1 jobs: 
+version: 2.1
+jobs:
   android_device_xiaomi_laurel_sprout:
-   steps: - run: name: Syncing source 
-          no_output_timeout: 20m command: |
-            cd ~ sudo apt-get purge openjdk-8-jdk 
-            openjdk-8-jre openjdk-11-jdk 
-            openjdk-11-jre -y sudo apt-get install 
-            openjdk-8-jdk openjdk-8-jre -y mkdir 
-            twrp && cd twrp repo init --depth=1 -u 
-            https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git 
-            -b twrp-9.0 repo sync -j$(nproc --all) 
-            mkdir -p device/laurel_sprout && cd 
-            device/laurel_sprout git clone 
-            https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME 
-            laurel_sprout
-      - run: name: Building no_output_timeout: 15m 
+   steps:
+      - run:
+          name: Syncing source
+          no_output_timeout: 20m
           command: |
-            cd ~/twrp source build/envsetup.sh 
-            add_lunch_combo omni_laurel_sprout-eng 
-            export ALLOW_MISSING_DEPENDENCIES=true 
-            lunch omni_laurel_sprout-eng make 
-            -j$(nproc --all) bootimage
+            cd ~
+            sudo apt-get purge openjdk-8-jdk openjdk-8-jre openjdk-11-jdk openjdk-11-jre -y
+            sudo apt-get install openjdk-8-jdk openjdk-8-jre -y
+            mkdir twrp && cd twrp
+            repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b twrp-9.0
+            repo sync -j$(nproc --all)
+            mkdir -p device/laurel_sprout && cd device/laurel_sprout
+            git clone https://github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME laurel_sprout
+
+      - run:
+          name: Building
+          no_output_timeout: 15m
+          command: |
+            cd ~/twrp
+            source build/envsetup.sh
+            add_lunch_combo omni_laurel_sprout-eng
+            export ALLOW_MISSING_DEPENDENCIES=true
+            lunch omni_laurel_sprout-eng
+            make -j$(nproc --all) bootimage
             
-      - run: name: Send To Telegram command: | cd 
-            ~/twrp/out/target/product/laurel_sprout 
-            ZIPNAME="TWRP-$(date 
-            +%d_%m_%Y_%H_%M)-laurel_sprout.zip" sudo 
-            zip -r9 $ZIPNAME bootimage.img curl -F 
-            chat_id=$CHAT_ID -F document=@$ZIPNAME 
-            -F parse_mode=markdown 
-            https://api.telegram.org/bot$BOT_TOKEN/sendDocument
-workflows: version: 2.1 cooking: jobs: - 
-      android_device_xiaomi_laurel_sprout
+      - run:
+          name: Send To Telegram
+          command: |
+            cd ~/twrp/out/target/product/laurel_sprout
+            ZIPNAME="TWRP-$(date +%d_%m_%Y_%H_%M)-laurel_sprout.zip"
+            sudo zip -r9 $ZIPNAME bootimage.img
+            curl -F chat_id=$CHAT_ID -F document=@$ZIPNAME -F parse_mode=markdown https://api.telegram.org/bot$BOT_TOKEN/sendDocument
+
+
+workflows:
+  version: 2.1
+  cooking:
+    jobs:
+      - android_device_xiaomi_laurel_sprout
